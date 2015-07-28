@@ -6,14 +6,16 @@ import sys
 from uuid import uuid1
 import time
 import datetime
+import ConfigParser
 
-def getdbconfig():
+def getDbConfig():
     config = ConfigParser.ConfigParser()
     with open('dbinfo.cfg','r') as cfgfile:
        config.readfp(cfgfile)
     return config
 
-def inittables(config):
+
+def initTables(config):
     db = config.get('database','dbname')
     usr = config.get('database','user')
     pswd = config.get('database','password')
@@ -32,7 +34,31 @@ def inittables(config):
         if con:
             con.close()
 
-def insertData(config,tablename,jsondata):
+def deleteData(config,tablename,query=None):
+    db = config.get('database','dbname')
+    usr = config.get('database','user')
+    pswd = config.get('database','password')
+    hostaddr = config.get('database','host')
+    try:
+        con = psycopg2.connect(database=db,user=usr,password=pswd,host=hostaddr) 
+        cur = con.cursor()
+        sql = None
+        if query==None:
+            sql = "delete from %s "%tablename
+        else:
+            sql = "delete from %s where %s"%(tablename,query)
+        cur.execute(sql)    
+        con.commit()
+    except psycopg2.DatabaseError, e:    
+        if con:
+            con.rollback()    
+        print 'Error %s' % e    
+        sys.exit(1)
+    finally:
+        if con:
+            con.close()
+            
+def insertOne(config,tablename,jsondata):
     db = config.get('database','dbname')
     usr = config.get('database','user')
     pswd = config.get('database','password')
@@ -51,8 +77,35 @@ def insertData(config,tablename,jsondata):
     finally:
         if con:
             con.close()
-            
-def convtoinsertvalues(jsonstr):
+
+def batchInsert(config,tablename,jsonlist):
+    db = config.get('database','dbname')
+    usr = config.get('database','user')
+    pswd = config.get('database','password')
+    hostaddr = config.get('database','host')
+    
+    insertDate = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
+    
+    # insert = "INSERT INTO %s (id,%s,CREATETIME) VALUES('%s','%s','%s')"%(tablename,','.join(jsondata.keys()),uuid1(),"\',\'".join(jsondata.values()),insertDate)
+    try:
+        con = psycopg2.connect(database=db,user=usr,password=pswd,host=hostaddr)
+        cur = con.cursor()
+        for i in range(1,len(jsonlist)):
+            if i%100==0:
+                con.commit()
+            insert = "INSERT INTO %s (id,%s,CREATETIME) VALUES('%s','%s','%s')"%(tablename,','.join(jsonlist[i].keys()),uuid1(),"\',\'".join(jsonlist[i].values()),insertDate)
+            cur.execute(insert)
+        con.commit()
+    except psycopg2.DatabaseError, e:    
+        if con:
+            con.rollback()    
+        print 'Error %s' % e    
+        sys.exit(1)
+    finally:
+        if con:
+            con.close()
+
+def convToInsertValues(jsonstr):
     sqlstr = []
     for i in jsonstr.keys():
         sqlstr.append("%s='%s'"%(i,jsonstr.get(i)))
