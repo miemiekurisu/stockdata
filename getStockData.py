@@ -39,6 +39,9 @@ def getresult(rawdata):
     js = json.loads(jsonstr,encoding='utf-8')
     return js.get('result')
 
+def getHistoryData(config, url):
+    pass
+
 # def prepareStockData():
 #     
 #     config = ConfigParser.ConfigParser()

@@ -105,6 +105,25 @@ def batchInsert(config,tablename,jsonlist):
         if con:
             con.close()
 
+
+def select(config,tablename, querystr ):
+    db = config.get('database','dbname')
+    usr = config.get('database','user')
+    pswd = config.get('database','password')
+    hostaddr = config.get('database','host')
+    select = "select productid from tbl_stock_code"
+    try:
+        con = psycopg2.connect(database=db,user=usr,password=pswd,host=hostaddr)
+        cur = con.cursor()
+        cur.execute(select)    
+        retrun cur.fetchall()
+    except psycopg2.DatabaseError, e:    
+        print 'Error %s' % e    
+        sys.exit(1)
+    finally:
+        if con:
+            con.close()
+
 def convToInsertValues(jsonstr):
     sqlstr = []
     for i in jsonstr.keys():
