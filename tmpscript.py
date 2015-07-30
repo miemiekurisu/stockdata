@@ -34,10 +34,11 @@ def select(config,tablename, querystr ):
 
 url_fmt = 'http://quotes.money.163.com/service/chddata.html?code=0%s&start=19980101&end=20150729&fields=TCLOSE;HIGH;LOW;TOPEN;LCLOSE;CHG;PCHG;TURNOVER;VOTURNOVER;VATURNOVER;TCAP;MCAP'
 
-insertnames = ['TRADDATE'  , 'PRODUCTID'  , 'closingprice'  , 'highestprice'  , 'lowestprice'  , 'oPENING' , 'LASTCLOSE'  , 'ChangeAmount'  , 'Quotechange'  , 'turnoverratio' , 'dailyvolume'  , 'TurnoverTotal'  ,'totalmarketcapitalization' , 'floatmarketcapitalization']
+insertnames = ['TRADDATE'  , 'PRODUCTID'  , 'PRODUCTNAME','closingprice'  , 'highestprice'  , 'lowestprice'  , 'oPENING' , 'LASTCLOSE'  , 'ChangeAmount'  , 'Quotechange'  , 'turnoverratio' , 'dailyvolume'  , 'TurnoverTotal'  ,'totalmarketcapitalization' , 'floatmarketcapitalization']
 
  
 cfg = getDbConfig()
+crud.initTables(cfg)
 row = select(cfg,'tbl_stock_code',None)
 
 for i in row:
