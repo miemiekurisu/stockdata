@@ -7,6 +7,8 @@ import ConfigParser
 import crud
 import urllib2
 import logging
+logging.basicConfig(filename='example.log',level=logging.INFO)
+
 
 def getDbConfig():
     config = ConfigParser.ConfigParser()
@@ -43,10 +45,12 @@ row = select(cfg,'tbl_stock_code',None)
 
 for i in row:
     url =  url_fmt%i[0]
+    logging.info('%s Begin'%i[0])
     req = urllib2.Request(url)
     response = urllib2.urlopen(req)
     historycsv = response.read().decode('gbk').splitlines()
     for i in historycsv[1:-1]:
         hisdata = dict(zip(insertnames,i.replace("'","").split(',')))
         crud.insertOne(cfg,'tbl_trade_history',hisdata)
+    logging.info('%s End'%i[0])
     
