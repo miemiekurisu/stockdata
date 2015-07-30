@@ -24,6 +24,8 @@ def initTables(config):
         con = psycopg2.connect(database=db,user=usr,password=pswd,host=hostaddr) 
         cur = con.cursor()
         cur.execute("CREATE TABLE IF NOT EXISTS tbl_stock_code(Id varchar(100) PRIMARY KEY, PRODUCTID varchar(20), FULLNAME varchar(200), NUM varchar(10), PRODUCTNAME varchar(200), CREATETIME varchar(200))")    
+        
+        cur.execute("CREATE TABLE IF NOT EXISTS tbl_trade_history(Id varchar(100) PRIMARY KEY, TRADDATE varchar(200), PRODUCTID varchar(200), closingprice varchar(200), highestprice varchar(200), lowestprice varchar(200), OPENING varchar(200), LASTCLOSE varchar(200), ChangeAmount varchar(200), Quotechange varchar(200), turnoverratio varchar(200), dailyvolume varchar(200), TurnoverTotal varchar(200),totalmarketcapitalization varchar(200), floatmarketcapitalization varchar(200), CREATETIME varchar(200))")  
         con.commit()
     except psycopg2.DatabaseError, e:    
         if con:
@@ -116,7 +118,7 @@ def select(config,tablename, querystr ):
         con = psycopg2.connect(database=db,user=usr,password=pswd,host=hostaddr)
         cur = con.cursor()
         cur.execute(select)    
-        retrun cur.fetchall()
+        cur.fetchall()
     except psycopg2.DatabaseError, e:    
         print 'Error %s' % e    
         sys.exit(1)

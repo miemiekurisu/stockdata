@@ -4,6 +4,9 @@ from uuid import uuid1
 import time
 import datetime
 import ConfigParser
+import crud
+import urllib2
+import logging
 
 def getDbConfig():
     config = ConfigParser.ConfigParser()
@@ -31,10 +34,18 @@ def select(config,tablename, querystr ):
 
 url_fmt = 'http://quotes.money.163.com/service/chddata.html?code=0%s&start=19980101&end=20150729&fields=TCLOSE;HIGH;LOW;TOPEN;LCLOSE;CHG;PCHG;TURNOVER;VOTURNOVER;VATURNOVER;TCAP;MCAP'
 
-bigcsv = []
+insertnames = ['TRADDATE'  , 'PRODUCTID'  , 'closingprice'  , 'highestprice'  , 'lowestprice'  , 'oPENING' , 'LASTCLOSE'  , 'ChangeAmount'  , 'Quotechange'  , 'turnoverratio' , 'dailyvolume'  , 'TurnoverTotal'  ,'totalmarketcapitalization' , 'floatmarketcapitalization']
 
-for i in row[0:10]:
+ 
+cfg = getDbConfig()
+row = select(cfg,'tbl_stock_code',None)
+
+for i in row:
     url =  url_fmt%i[0]
     req = urllib2.Request(url)
     response = urllib2.urlopen(req)
-    bigcsv.append(response.read())
+    historycsv = response.read().decode('gbk').splitlines()
+    for i in historycsv[1:-1]:
+        hisdata = dict(zip(insertnames,i.replace("'","").split(',')))
+        crud.insertOne(cfg,'tbl_trade_history',hisdata)
+    
