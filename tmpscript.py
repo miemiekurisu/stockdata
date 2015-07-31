@@ -2,11 +2,13 @@ import psycopg2
 import sys
 from uuid import uuid1
 import time
-import datetime
+from datetime import datetime
 import ConfigParser
 import crud
 import urllib2
 import logging
+from uuid import uuid1
+
 logging.basicConfig(filename='example.log',level=logging.INFO)
 
 
@@ -42,15 +44,36 @@ insertnames = ['TRADDATE'  , 'PRODUCTID'  , 'PRODUCTNAME','closingprice'  , 'hig
 cfg = getDbConfig()
 crud.initTables(cfg)
 row = select(cfg,'tbl_stock_code',None)
+db = cfg.get('database','dbname')
+usr = cfg.get('database','user')
+pswd = cfg.get('database','password')
+hostaddr = cfg.get('database','host')
 
+
+        
 for i in row:
     url =  url_fmt%i[0]
-    logging.info('%s Begin'%i[0])
+    logging.info('%s %s Begin'%(datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S"),i[0]))
     req = urllib2.Request(url)
     response = urllib2.urlopen(req)
     historycsv = response.read().decode('gbk').splitlines()
-    for i in historycsv[1:-1]:
-        hisdata = dict(zip(insertnames,i.replace("'","").split(',')))
-        crud.insertOne(cfg,'tbl_trade_history',hisdata)
-    logging.info('%s End'%i[0])
-    
+    try:
+        con = psycopg2.connect(database=db,user=usr,password=pswd,host=hostaddr)
+        cur = con.cursor()
+        if len(historycsv) <=1:
+            continue
+        for i in historycsv[1:-1]:
+            hisdata = dict(zip(insertnames,i.replace("'","").split(',')))
+            insert = "INSERT INTO %s (id,%s,CREATETIME) VALUES('%s','%s','%s')"%(tablename,','.join(hisdata.keys()),uuid1(),"\',\'".join(hisdata.values()),datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S"))
+            logging.debug(insert)
+            cur.execute(insert)
+        con.commit()
+        logging.info('%s %s End'%(datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S"),i[0]))
+    except psycopg2.DatabaseError, e:    
+        if con:
+            con.rollback()    
+        logging.error('%s Error %s' % (datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S"),e))     
+        sys.exit(1)
+    finally:
+        if con:
+            con.close()
